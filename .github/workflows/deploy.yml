@@ -40,7 +40,7 @@ jobs:
       id: build-image
       run: |
         IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-        ECR_URI="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
+        ECR_URI= 615299775895.dkr.ecr.us-east-2.amazonaws.com/zomato-app
         docker build -t $ECR_URI:$IMAGE_TAG .
         docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
         docker push $ECR_URI:$IMAGE_TAG
