@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: us-east-2
   AWS_ACCOUNT_ID: 615299775895  # Replace with your AWS Account ID
-  ECR_REPOSITORY: 615299775895.dkr.ecr.us-east-2.amazonaws.com
+  ECR_REPOSITORY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/zomato-app
   ECS_CLUSTER: Zomato-app
   ECS_SERVICE: nginx
   ECS_TASK_DEFINITION: nginx
