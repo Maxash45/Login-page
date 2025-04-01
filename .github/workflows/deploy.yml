@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: us-east-2
   AWS_ACCOUNT_ID: 615299775895  # Replace with your AWS Account ID
-  ECR_REPOSITORY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/zomato-app
+  ECR_REPOSITORY: 615299775895.dkr.ecr.us-east-2.amazonaws.com
   ECS_CLUSTER: Zomato-app
   ECS_SERVICE: nginx
   ECS_TASK_DEFINITION: nginx
@@ -34,7 +34,7 @@ jobs:
     - name: Login to Amazon ECR
       id: login-ecr
       run: |
-        aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REPOSITORY
+        aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin 615299775895.dkr.ecr.us-east-2.amazonaws.com
 
     - name: Build, tag, and push Docker image to Amazon ECR
       id: build-image
@@ -57,7 +57,7 @@ jobs:
         fi
         
         CLEAN_TASK_DEF=$(echo "$TASK_DEF_JSON" | jq 'del(.status, .taskDefinitionArn, .revision, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
-        NEW_TASK_DEF=$(echo "$CLEAN_TASK_DEF" | jq --arg IMAGE_URI "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE_URI')
+        NEW_TASK_DEF=$(echo "$CLEAN_TASK_DEF" | jq --arg IMAGE_URI "$ECR_REPOSITORY:$IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE_URI')
 
         echo "$NEW_TASK_DEF" > new-task-def.json
         
