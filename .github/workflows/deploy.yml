@@ -15,7 +15,7 @@ env:
 jobs:
   deploy:
     name: Deploy to AWS ECS
-    runs-on: [self-hosted, DESKTOP-QM1IAFL]
+    runs-on: [self-hosted]
 
     steps:
     - name: Checkout repository
