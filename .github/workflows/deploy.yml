@@ -8,9 +8,9 @@ env:
   AWS_REGION: us-east-2
   AWS_ACCOUNT_ID: 615299775895
   ECR_REPOSITORY: 615299775895.dkr.ecr.us-east-2.amazonaws.com/docker-images
-  ECS_CLUSTER: Zomato-app
-  ECS_SERVICE: nginx
-  ECS_TASK_DEFINITION: nginx
+  ECS_CLUSTER: My-cluster
+  ECS_SERVICE: My-service
+  ECS_TASK_DEFINITION: My-taskdefination 
 
 jobs:
   deploy:
