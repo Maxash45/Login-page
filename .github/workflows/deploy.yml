@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  AWS_ACCOUNT_ID: 615299775895  # Replace with your AWS Account ID
+  AWS_ACCOUNT_ID: 615299775895
   ECR_REPOSITORY: 615299775895.dkr.ecr.us-east-2.amazonaws.com
   ECS_CLUSTER: Zomato-app
   ECS_SERVICE: nginx
@@ -15,7 +15,7 @@ env:
 jobs:
   deploy:
     name: Deploy to AWS ECS
-    runs-on: [self-hosted, Windows]  # Specify Windows runner
+    runs-on: self-hosted  # Change from ubuntu-latest to self-hosted
 
     steps:
     - name: Checkout repository
@@ -28,56 +28,39 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-
-
     - name: Login to Amazon ECR
       id: login-ecr
       run: |
-        $password = aws ecr get-login-password --region $env:AWS_REGION
-        $password | docker login --username AWS --password-stdin $env:ECR_REPOSITORY
-      shell: powershell
+        aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REPOSITORY 
 
     - name: Build, tag, and push Docker image to Amazon ECR
       id: build-image
       run: |
-        $IMAGE_TAG = Get-Date -Format "yyyyMMddHHmmss"
-        $ECR_URI = "615299775895.dkr.ecr.us-east-2.amazonaws.com/zomato-app"
-        
-        docker build -t "$ECR_URI`:$IMAGE_TAG" .
-        docker tag "$ECR_URI`:$IMAGE_TAG" "$ECR_URI`:latest"
-        docker push "$ECR_URI`:$IMAGE_TAG"
-        docker push "$ECR_URI`:latest"
-        
-        echo "IMAGE_TAG=$IMAGE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append
-      shell: powershell
-
-    - name: Install jq for Windows (if not installed)
-      run: |
-        if (-not (Get-Command jq -ErrorAction SilentlyContinue)) {
-          Invoke-WebRequest -Uri "https://github.com/stedolan/jq/releases/latest/download/jq-win64.exe" -OutFile "$env:TEMP\jq.exe"
-          Move-Item -Path "$env:TEMP\jq.exe" -Destination "C:\Windows\System32\jq.exe" -Force
-        }
-      shell: powershell
+        IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+        ECR_URI="615299775895.dkr.ecr.us-east-2.amazonaws.com/zomato-app"
+        docker build -t $ECR_URI:$IMAGE_TAG .
+        docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
+        docker push $ECR_URI:$IMAGE_TAG
+        docker push $ECR_URI:latest
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
     - name: Retrieve and Update ECS Task Definition
       id: task-def
       run: |
-        $TASK_DEF_JSON = aws ecs describe-task-definition --task-definition $env:ECS_TASK_DEFINITION --query taskDefinition
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "Failed to retrieve task definition"
+        TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION --query taskDefinition || echo "ERROR")
+        if [[ "$TASK_DEF_JSON" == "ERROR" ]]; then
+          echo "Failed to retrieve task definition"
           exit 1
-        }
+        fi
 
-        $CLEAN_TASK_DEF = $TASK_DEF_JSON | jq 'del(.status, .taskDefinitionArn, .revision, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)'
-        $NEW_TASK_DEF = $CLEAN_TASK_DEF | jq --arg IMAGE_URI "$env:ECR_REPOSITORY`:$env:IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE_URI'
+        CLEAN_TASK_DEF=$(echo "$TASK_DEF_JSON" | jq 'del(.status, .taskDefinitionArn, .revision, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+        NEW_TASK_DEF=$(echo "$CLEAN_TASK_DEF" | jq --arg IMAGE_URI "$ECR_REPOSITORY:$IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE_URI')
+
+        echo "$NEW_TASK_DEF" > new-task-def.json
         
-        $NEW_TASK_DEF | Out-File -FilePath "new-task-def.json"
-        
-        $NEW_TASK_REVISION = aws ecs register-task-definition --cli-input-json file://new-task-def.json --query taskDefinition.revision --output text
-        echo "NEW_TASK_REVISION=$NEW_TASK_REVISION" | Out-File -FilePath $env:GITHUB_ENV -Append
-      shell: powershell
+        NEW_TASK_REVISION=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query taskDefinition.revision --output text)
+        echo "NEW_TASK_REVISION=$NEW_TASK_REVISION" >> $GITHUB_ENV
 
     - name: Deploy to ECS
       run: |
-        aws ecs update-service --cluster $env:ECS_CLUSTER --service $env:ECS_SERVICE --task-definition "$env:ECS_TASK_DEFINITION`:$env:NEW_TASK_REVISION" --force-new-deployment
-      shell: powershell
+        aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_TASK_DEFINITION:$NEW_TASK_REVISION --force-new-deployment
