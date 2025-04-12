@@ -8,6 +8,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to perform (apply or destroy)'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
   terraform:
@@ -16,7 +25,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: terraform
+        working-directory: ./Terraform
 
     steps:
       - name: Checkout Repository
@@ -45,8 +54,11 @@ jobs:
       - name: Terraform Plan
         run: terraform plan
         working-directory: ./Terraform
-      
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
+
+      - name: Terraform Apply or Destroy
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: terraform apply -auto-approve
-        working-directory: ./Terraform
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve
