@@ -25,7 +25,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./modules
+        working-directory: .
 
     steps:
       - name: Checkout Repository
@@ -45,15 +45,15 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ./modules
+        working-directory: .
         
       - name: Terraform Validate
         run: terraform validate
-        working-directory: ./modules
+        working-directory: .
      
       - name: Terraform Plan
         run: terraform plan
-        working-directory: ./modules
+        working-directory: .
 
       - name: Terraform Apply or Destroy
         if: ${{ github.event.inputs.action == 'apply' }}
