@@ -41,19 +41,19 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2  # Or change to your region
+          aws-region: us-east-1  # Or change to your region
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ./Terraform
+        working-directory: ./modules
         
       - name: Terraform Validate
         run: terraform validate
-        working-directory: ./Terraform
+        working-directory: ./modules
      
       - name: Terraform Plan
         run: terraform plan
-        working-directory: ./Terraform
+        working-directory: ./modules
 
       - name: Terraform Apply or Destroy
         if: ${{ github.event.inputs.action == 'apply' }}
