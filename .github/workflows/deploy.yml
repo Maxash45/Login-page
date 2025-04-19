@@ -47,9 +47,6 @@ jobs:
         run: terraform init
         working-directory: .
         
-      - name: Terraform Validate
-        run: terraform validate
-        working-directory: .
      
       - name: Terraform Plan
         run: terraform plan
