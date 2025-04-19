@@ -25,7 +25,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./Terraform
+        working-directory: ./modules
 
     steps:
       - name: Checkout Repository
